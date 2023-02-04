@@ -284,6 +284,7 @@ def diffGlossary(
 		pass  # noqa: S110
 	except Exception as e:
 		print(e)
+		# TODO: log.exception("")
 	finally:
 		if proc:
 			proc.communicate()

@@ -5,4 +5,8 @@ myPath=$(realpath "$0")
 myDir1=$(dirname "$myPath")
 rootDir=$(dirname "$myDir1")
 
+if [ -n "$ConEmuDir" ] ; then
+    export BAD_BIDI_SUPPORT=1
+fi
+
 PYTHONPATH=$rootDir python $rootDir/pyglossary/ui/tools/diff_glossary.py "$@"
