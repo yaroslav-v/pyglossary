@@ -26,7 +26,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import gi
 
 from pyglossary import core
-from pyglossary.glossary import (
+from pyglossary.glossary_v2 import (
 	Glossary,
 	defaultSortKeyName,
 )

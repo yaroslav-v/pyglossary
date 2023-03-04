@@ -4,7 +4,7 @@ import sys
 from subprocess import PIPE, Popen
 from typing import Callable, Optional
 
-from pyglossary import Glossary
+from pyglossary.glossary import Glossary
 from pyglossary.glossary_type import EntryType
 from pyglossary.ui.tools.colors import reset, yellow
 from pyglossary.ui.tools.format_entry import formatEntry

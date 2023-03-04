@@ -24,7 +24,7 @@ from os.path import join
 from typing import Dict, Optional
 
 from pyglossary.core import dataDir, log
-from pyglossary.glossary import Glossary
+from pyglossary.glossary_v2 import Glossary
 
 from . import progressbar as pb
 from .base import UIBase, fread

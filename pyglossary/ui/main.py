@@ -192,7 +192,7 @@ def base_ui_run(
 	convertOptions: "Optional[Dict]" = None,
 	glossarySetAttrs: "Optional[Dict]" = None,
 ) -> bool:
-	from pyglossary.glossary import Glossary
+	from pyglossary.glossary_v2 import Glossary
 	if reverse:
 		log.error("--reverse does not work with --ui=none")
 		return False
@@ -635,7 +635,7 @@ def main() -> None:
 
 	##############################
 
-	from pyglossary.glossary import Glossary
+	from pyglossary.glossary_v2 import Glossary
 	from pyglossary.langs import langDict
 	from pyglossary.ui.ui_cmd import help, parseFormatOptionsStr
 

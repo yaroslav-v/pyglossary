@@ -17,7 +17,8 @@ rootDir = dirname(dirname(abspath(__file__)))
 sys.path.insert(0, rootDir)
 
 from pyglossary.core import cacheDir, log
-from pyglossary.glossary import Glossary
+from pyglossary.glossary import Glossary as GlossaryLegacy
+from pyglossary.glossary_v2 import Glossary
 from pyglossary.os_utils import rmtree
 from pyglossary.text_utils import crc32hex
 
@@ -426,7 +427,7 @@ class TestGlossary(TestGlossaryBase):
 
 	def test_read_txt_1(self):
 		inputFilename = self.downloadFile("100-en-fa.txt")
-		glos = self.glos = Glossary()
+		glos = self.glos = GlossaryLegacy()
 		res = glos.read(filename=inputFilename)
 		self.assertTrue(res)
 		self.assertEqual(glos.sourceLangName, "English")
@@ -436,7 +437,7 @@ class TestGlossary(TestGlossaryBase):
 
 	def test_read_txt_direct_1(self):
 		inputFilename = self.downloadFile("100-en-fa.txt")
-		glos = self.glos = Glossary()
+		glos = self.glos = GlossaryLegacy()
 		res = glos.read(filename=inputFilename, direct=True)
 		self.assertTrue(res)
 		self.assertEqual(glos.sourceLangName, "English")
@@ -936,7 +937,7 @@ Japonica"""
 		self.assertEqual(dataEntries[0].data, b"hello\x00world")
 
 	def test_sortWords_1(self):
-		glos = self.glos = Glossary()
+		glos = self.glos = GlossaryLegacy()
 		wordsList = self.addWords(
 			glos,
 			self.tenWordsStr,
@@ -947,7 +948,7 @@ Japonica"""
 		self.assertEqual(sorted(wordsList), [entry.l_word for entry in glos])
 
 	def test_sortWords_2(self):
-		glos = self.glos = Glossary()
+		glos = self.glos = GlossaryLegacy()
 		wordsList = self.addWords(
 			glos,
 			self.tenWordsStr2,
@@ -972,7 +973,7 @@ Japonica"""
 		)
 
 	def test_sortWords_3(self):
-		glos = self.glos = Glossary()
+		glos = self.glos = GlossaryLegacy()
 		wordsList = self.addWords(
 			glos,
 			self.tenWordsStrFa,
@@ -988,7 +989,7 @@ Japonica"""
 		)
 
 	def test_sortWords_4(self):
-		glos = self.glos = Glossary()
+		glos = self.glos = GlossaryLegacy()
 		wordsList = self.addWords(
 			glos,
 			self.tenWordsStrFa,
@@ -1007,7 +1008,7 @@ Japonica"""
 		)
 
 	def test_sortWords_5(self):
-		glos = self.glos = Glossary()
+		glos = self.glos = GlossaryLegacy()
 		alphabetW1256 = "ءآأئابتثجحخدذرزسشصضطظعغـفقكلمنهوىي"
 		alphabetW1256_shuf = "مفزنصـذرخوآظسقلدغطيعحءأتىئاجهضثشكب"
 		wordsList = self.addWordsList(
@@ -1027,7 +1028,7 @@ Japonica"""
 
 	def test_sortWords_exc_1(self):
 		fname = "100-en-fa.txt"
-		glos = self.glos = Glossary()
+		glos = self.glos = GlossaryLegacy()
 		glos.read(self.downloadFile(fname), direct=True)
 		try:
 			glos.sortWords()
@@ -1037,7 +1038,7 @@ Japonica"""
 			self.fail("must raise NotImplementedError")
 
 	def test_read_filename(self):
-		glos = self.glos = Glossary()
+		glos = self.glos = GlossaryLegacy()
 		glos.read(self.downloadFile("004-bar.txt"))
 		self.assertEqual(glos.filename, join(dataDir, "004-bar"))
 

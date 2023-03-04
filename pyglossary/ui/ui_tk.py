@@ -27,9 +27,7 @@ from typing import Callable, Dict, List, Literal, Optional
 
 from pyglossary import core
 from pyglossary.core import confDir, homeDir
-from pyglossary.glossary import (
-	Glossary,
-)
+from pyglossary.glossary_v2 import Glossary
 from pyglossary.text_utils import urlToPath
 
 from .base import (

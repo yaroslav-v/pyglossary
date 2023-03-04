@@ -10,7 +10,8 @@ rootDir = dirname(dirname(abspath(__file__)))
 sys.path.insert(0, rootDir)
 
 from pyglossary.core_test import getMockLogger
-from pyglossary.glossary import Glossary
+from pyglossary.glossary import Glossary as GlossaryLegacy
+from pyglossary.glossary_v2 import Glossary
 from pyglossary.os_utils import rmtree
 from tests.glossary_test import TestGlossaryBase, appTmpDir
 
@@ -319,7 +320,7 @@ class TestGlossaryErrors(TestGlossaryErrorsBase):
 			self.fail("must raise TypeError")
 
 	def test_read_typeErr_1(self):
-		glos = Glossary()
+		glos = GlossaryLegacy()
 		try:
 			glos.read(
 				filename=MyStr(""),
@@ -330,7 +331,7 @@ class TestGlossaryErrors(TestGlossaryErrorsBase):
 			self.fail("must raise TypeError")
 
 	def test_read_typeErr_2(self):
-		glos = Glossary()
+		glos = GlossaryLegacy()
 		try:
 			glos.read(
 				filename="",
@@ -457,14 +458,14 @@ class TestGlossaryErrors(TestGlossaryErrorsBase):
 
 	def test_collectDefiFormat_direct(self):
 		fname = "100-en-fa.txt"
-		glos = self.glos = Glossary()
+		glos = self.glos = GlossaryLegacy()
 		glos.read(self.downloadFile(fname), direct=True)
 		res = glos.collectDefiFormat(10)
 		self.assertIsNone(res)
 		self.assertLogError("collectDefiFormat: not supported in direct mode")
 
 	def test_sortWords_invalidSortKeyName(self):
-		glos = self.glos = Glossary()
+		glos = self.glos = GlossaryLegacy()
 		glos.sortWords(
 			sortKeyName="blah",
 		)
