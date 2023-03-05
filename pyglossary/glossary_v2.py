@@ -552,6 +552,20 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 				log.error(f"bad info value: definition_has_headwords={hasTitleStr!r}")
 		return True
 
+	def directRead(
+		self,
+		filename: str,
+		format: str = "",
+		**options,  # noqa: ANN
+	) -> bool:
+		self._setTmpDataDir(filename)
+		return self._read(
+			filename=filename,
+			format=format,
+			direct=True,
+			**options,
+		)
+
 	def _read(
 		self,
 		filename: str,
