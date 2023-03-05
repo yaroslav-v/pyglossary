@@ -18,7 +18,7 @@ sys.path.insert(0, rootDir)
 
 from pyglossary.core import cacheDir, log
 from pyglossary.glossary import Glossary as GlossaryLegacy
-from pyglossary.glossary_v2 import Glossary
+from pyglossary.glossary_v2 import ConvertArgs, Glossary
 from pyglossary.os_utils import rmtree
 from pyglossary.text_utils import crc32hex
 
@@ -234,18 +234,18 @@ class TestGlossaryBase(unittest.TestCase):
 		md5sum=None,
 		config=None,
 		showDiff=False,
-		**convertArgs,
+		**convertKWArgs,
 	):
 		inputFilename = self.downloadFile(fname)
 		outputFilename = self.newTempFilePath(fname2)
 		glos = self.glos = Glossary()
 		if config is not None:
 			glos.config = config
-		res = glos.convert(
+		res = glos.convert(ConvertArgs(
 			inputFilename=inputFilename,
 			outputFilename=outputFilename,
-			**convertArgs,
-		)
+			**convertKWArgs,
+		))
 		self.assertEqual(outputFilename, res)
 
 		if compareText:
@@ -575,7 +575,7 @@ class TestGlossary(TestGlossaryBase):
 		fname2,  # expected output file without extensions
 		testId="tmp",
 		config=None,
-		**convertArgs,
+		**convertKWArgs,
 	):
 		inputFilename = self.downloadFile(fname)
 		outputTxtName = f"{fname2}-{testId}.txt"
@@ -584,11 +584,11 @@ class TestGlossary(TestGlossaryBase):
 		glos = self.glos = Glossary()
 		if config is not None:
 			glos.config = config
-		res = glos.convert(
+		res = glos.convert(ConvertArgs(
 			inputFilename=inputFilename,
 			outputFilename=outputFilename,
-			**convertArgs,
-		)
+			**convertKWArgs,
+		))
 		self.assertEqual(outputFilename, res)
 		zf = zipfile.ZipFile(outputFilename)
 		self.assertTrue(
@@ -733,12 +733,12 @@ class TestGlossary(TestGlossaryBase):
 	def test_convert_sqlite_direct_error(self):
 		glos = self.glos = Glossary()
 		try:
-			glos.convert(
+			glos.convert(ConvertArgs(
 				inputFilename="foo.txt",
 				outputFilename="bar.txt",
 				direct=True,
 				sqlite=True,
-			)
+			))
 		except ValueError as e:
 			self.assertEqual(str(e), "Conflictng arguments: direct=True, sqlite=True")
 		else:

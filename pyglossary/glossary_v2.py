@@ -23,6 +23,7 @@ import os
 import os.path
 from collections import OrderedDict as odict
 from contextlib import suppress
+from dataclasses import dataclass
 from os.path import (
 	isdir,
 	isfile,
@@ -89,6 +90,22 @@ sortKeyType = Callable[
 """
 
 EntryFilterType = TypeVar("EntryFilter", bound=EntryFilter)
+
+
+@dataclass
+class ConvertArgs:
+	inputFilename: str
+	inputFormat: str = ""
+	direct: "Optional[bool]" = None
+	outputFilename: str = ""
+	outputFormat: str = ""
+	sort: "Optional[bool]" = None
+	sortKeyName: "Optional[str]" = None
+	sortEncoding: "Optional[str]" = None
+	readOptions: "Optional[Dict[str, Any]]" = None
+	writeOptions: "Optional[Dict[str, Any]]" = None
+	sqlite: "Optional[bool]" = None
+	infoOverride: "Optional[Dict[str, str]]" = None
 
 
 class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
@@ -204,7 +221,7 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 					args = (value,)
 			entryFilters.append(filterClass(self, *args))
 
-		if self.hasProgress:
+		if self.progressbar:
 			entryFilters.append(ShowProgressBar(self))
 
 		if log.level <= core.TRACE:
@@ -268,7 +285,7 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 		)
 
 	def _loadedEntryGen(self) -> "Iterator[EntryType]":
-		if not self.hasProgress:
+		if not self.progressbar:
 			yield from self._data
 			return
 
@@ -526,14 +543,14 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 
 	def _openReader(self, reader: "Any", filename: str) -> bool:
 		# reader.open returns "Optional[Iterator[Tuple[int, int]]]"
-		hasProgress: bool = self.hasProgress
+		progressbar: bool = self.progressbar
 		try:
 			openResult = reader.open(filename)
 			if openResult is not None:
 				self.progressInit("Reading metadata")
 				lastPos = -100_000
 				for pos, total in openResult:
-					if hasProgress and pos - lastPos > 100_000:
+					if progressbar and pos - lastPos > 100_000:
 						self.progress(pos, total, unit="bytes")
 						lastPos = pos
 				self.progressEnd()
@@ -982,21 +999,15 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 
 		return False, True
 
-	def _convertValidateStrings(
-		self,
-		inputFilename: str,
-		inputFormat: str,
-		outputFilename: str,
-		outputFormat: str,
-	):
-		if type(inputFilename) is not str:
+	def _convertValidateStrings(self, args: ConvertArgs):
+		if type(args.inputFilename) is not str:
 			raise TypeError("inputFilename must be str")
-		if type(outputFilename) is not str:
+		if type(args.outputFilename) is not str:
 			raise TypeError("outputFilename must be str")
 
-		if inputFormat is not None and type(inputFormat) is not str:
+		if args.inputFormat is not None and type(args.inputFormat) is not str:
 			raise TypeError("inputFormat must be str")
-		if outputFormat is not None and type(outputFormat) is not str:
+		if args.outputFormat is not None and type(args.outputFormat) is not str:
 			raise TypeError("outputFormat must be str")
 
 	def _convertPrepare(
@@ -1053,22 +1064,7 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 		# del inputFilename, inputFormat, direct, readOptions
 		return sort
 
-	def convert(
-		self,
-		inputFilename: str,
-		inputFormat: str = "",
-		direct: "Optional[bool]" = None,
-		progressbar: bool = True,
-		outputFilename: str = "",
-		outputFormat: str = "",
-		sort: "Optional[bool]" = None,
-		sortKeyName: "Optional[str]" = None,
-		sortEncoding: "Optional[str]" = None,
-		readOptions: "Optional[Dict[str, Any]]" = None,
-		writeOptions: "Optional[Dict[str, Any]]" = None,
-		sqlite: "Optional[bool]" = None,
-		infoOverride: "Optional[Dict[str, str]]" = None,
-	) -> "Optional[str]":
+	def convert(self, args: ConvertArgs) -> "Optional[str]":
 		"""
 		returns absolute path of output file, or None if failed
 
@@ -1084,53 +1080,46 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 		sortEncoding:
 			encoding/charset for sorting, default to utf-8
 		"""
-		self._convertValidateStrings(
-			inputFilename=inputFilename,
-			inputFormat=inputFormat,
-			outputFilename=outputFilename,
-			outputFormat=outputFormat,			
-		)
-		if outputFilename == inputFilename:
+		self._convertValidateStrings(args)
+		if args.outputFilename == args.inputFilename:
 			log.critical("Input and output files are the same")
 			return None
 
-		if not readOptions:
-			readOptions = {}
-		if not writeOptions:
-			writeOptions = {}
+		if not args.readOptions:
+			args.readOptions = {}
+		if not args.writeOptions:
+			args.writeOptions = {}
 
 		tm0 = now()
 
 		outputArgs = self.detectOutputFormat(
-			filename=outputFilename,
-			format=outputFormat,
-			inputFilename=inputFilename,
+			filename=args.outputFilename,
+			format=args.outputFormat,
+			inputFilename=args.inputFilename,
 		)
 		if not outputArgs:
-			log.critical(f"Writing file {relpath(outputFilename)!r} failed.")
+			log.critical(f"Writing file {relpath(args.outputFilename)!r} failed.")
 			return None
 		outputFilename, outputFormat, compression = outputArgs
 
-		self._progressbar = progressbar
-
 		sort = self._convertPrepare(
-			inputFilename=inputFilename,
-			inputFormat=inputFormat,
-			direct=direct,
+			inputFilename=args.inputFilename,
+			inputFormat=args.inputFormat,
+			direct=args.direct,
 			outputFilename=outputFilename,
 			outputFormat=outputFormat,
-			sort=sort,
-			sortKeyName=sortKeyName,
-			sortEncoding=sortEncoding,
-			readOptions=readOptions,
-			writeOptions=writeOptions,
-			sqlite=sqlite,
+			sort=args.sort,
+			sortKeyName=args.sortKeyName,
+			sortEncoding=args.sortEncoding,
+			readOptions=args.readOptions,
+			writeOptions=args.writeOptions,
+			sqlite=args.sqlite,
 		)
 		if sort is None:
 			return None
 
-		if infoOverride:
-			for key, value in infoOverride.items():
+		if args.infoOverride:
+			for key, value in args.infoOverride.items():
 				self.setInfo(key, value)
 
 		if compression and not self.plugins[outputFormat].singleFile:
@@ -1140,7 +1129,7 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 			outputFilename,
 			outputFormat,
 			sort=sort,
-			**writeOptions,
+			**args.writeOptions,
 		)
 		if not finalOutputFile:
 			log.critical(f"Writing file {relpath(outputFilename)!r} failed.")

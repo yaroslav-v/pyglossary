@@ -11,7 +11,7 @@ sys.path.insert(0, rootDir)
 
 from pyglossary.core_test import getMockLogger
 from pyglossary.glossary import Glossary as GlossaryLegacy
-from pyglossary.glossary_v2 import Glossary
+from pyglossary.glossary_v2 import ConvertArgs, Glossary
 from pyglossary.os_utils import rmtree
 from tests.glossary_test import TestGlossaryBase, appTmpDir
 
@@ -269,9 +269,9 @@ class TestGlossaryErrors(TestGlossaryErrorsBase):
 	def test_convert_typeErr_1(self):
 		glos = Glossary()
 		try:
-			glos.convert(
+			glos.convert(ConvertArgs(
 				inputFilename=MyStr(""),
-			)
+			))
 		except TypeError as e:
 			self.assertEqual(str(e), "inputFilename must be str")
 		else:
@@ -280,10 +280,10 @@ class TestGlossaryErrors(TestGlossaryErrorsBase):
 	def test_convert_typeErr_2(self):
 		glos = Glossary()
 		try:
-			glos.convert(
+			glos.convert(ConvertArgs(
 				inputFilename="",
 				outputFilename=MyStr(""),
-			)
+			))
 		except TypeError as e:
 			self.assertEqual(str(e), "outputFilename must be str")
 		else:
@@ -292,11 +292,11 @@ class TestGlossaryErrors(TestGlossaryErrorsBase):
 	def test_convert_typeErr_3(self):
 		glos = Glossary()
 		try:
-			glos.convert(
+			glos.convert(ConvertArgs(
 				inputFilename="",
 				outputFilename="",
 				inputFormat=MyStr(""),
-			)
+			))
 		except TypeError as e:
 			self.assertEqual(str(e), "inputFormat must be str")
 		else:
@@ -305,12 +305,12 @@ class TestGlossaryErrors(TestGlossaryErrorsBase):
 	def test_convert_typeErr_4(self):
 		glos = Glossary()
 		try:
-			glos.convert(
+			glos.convert(ConvertArgs(
 				inputFilename="",
 				outputFilename="",
 				inputFormat="",
 				outputFormat=MyStr(""),
-			)
+			))
 		except TypeError as e:
 			self.assertEqual(str(e), "outputFormat must be str")
 		else:
@@ -365,10 +365,10 @@ class TestGlossaryErrors(TestGlossaryErrorsBase):
 
 	def test_convert_sameFilename(self):
 		glos = Glossary()
-		res = glos.convert(
+		res = glos.convert(ConvertArgs(
 			inputFilename="test4.txt",
 			outputFilename="test4.txt",
-		)
+		))
 		self.assertIsNone(res)
 		self.assertLogCritical("Input and output files are the same")
 
@@ -377,11 +377,11 @@ class TestGlossaryErrors(TestGlossaryErrorsBase):
 		tempFilePath = self.newTempFilePath("test_convert_dirExists")
 		with open(tempFilePath, mode="w") as _file:
 			_file.write("")
-		res = glos.convert(
+		res = glos.convert(ConvertArgs(
 			inputFilename="test5.txt",
 			outputFilename=self.tempDir,
 			outputFormat="Stardict",
-		)
+		))
 		self.assertIsNone(res)
 		self.assertLogCritical(
 			f"Directory already exists and not empty: {relpath(self.tempDir)}",
@@ -390,10 +390,10 @@ class TestGlossaryErrors(TestGlossaryErrorsBase):
 	def test_convert_fileNotFound(self):
 		glos = Glossary()
 		inputFilename = join(osRoot(), "abc", "def", "test6.txt")
-		res = glos.convert(
+		res = glos.convert(ConvertArgs(
 			inputFilename=inputFilename,
 			outputFilename="test2.txt",
-		)
+		))
 		self.assertIsNone(res)
 		self.assertLogCritical(
 			f"[Errno 2] No such file or directory: {inputFilename!r}",
@@ -402,11 +402,11 @@ class TestGlossaryErrors(TestGlossaryErrorsBase):
 
 	def test_convert_unableDetectOutputFormat(self):
 		glos = Glossary()
-		res = glos.convert(
+		res = glos.convert(ConvertArgs(
 			inputFilename="test7.txt",
 			outputFilename="test",
 			outputFormat="",
-		)
+		))
 		self.assertIsNone(res)
 		self.assertLogCritical("Unable to detect output format!")
 		self.assertLogCritical(f"Writing file {relpath('test')!r} failed.")
@@ -418,10 +418,10 @@ class TestGlossaryErrors(TestGlossaryErrorsBase):
 			"7de8cf6f17bc4c9abb439e71adbec95d.txt",
 		)
 		glos = Glossary()
-		res = glos.convert(
+		res = glos.convert(ConvertArgs(
 			inputFilename=self.downloadFile("100-en-fa.txt"),
 			outputFilename=outputFilename,
-		)
+		))
 		self.assertIsNone(res)
 		self.assertLogCritical(
 			f"[Errno 2] No such file or directory: {outputFilename!r}",
@@ -431,10 +431,10 @@ class TestGlossaryErrors(TestGlossaryErrorsBase):
 	def test_convert_writeFileNotFound_hdir(self):
 		outputFilename = join(osRoot(), "test", "40e20107f5b04087bfc0ec0d61510017.hdir")
 		glos = Glossary()
-		res = glos.convert(
+		res = glos.convert(ConvertArgs(
 			inputFilename=self.downloadFile("100-en-fa.txt"),
 			outputFilename=outputFilename,
-		)
+		))
 		self.assertIsNone(res)
 		self.assertLogCritical(
 			f"{osNoSuchFileOrDir} {outputFilename!r}",
@@ -444,12 +444,12 @@ class TestGlossaryErrors(TestGlossaryErrorsBase):
 	def test_convert_invalidSortKeyName(self):
 		glos = self.glos = Glossary()
 		outputFilename = self.newTempFilePath("none.txt")
-		res = glos.convert(
+		res = glos.convert(ConvertArgs(
 			inputFilename=self.downloadFile("100-en-fa.txt"),
 			outputFilename=outputFilename,
 			sort=True,
 			sortKeyName="blah",
-		)
+		))
 		self.assertIsNone(res)
 		self.assertLogCritical("invalid sortKeyName = 'blah'")
 

@@ -22,6 +22,7 @@ from time import time as now
 from typing import Any, Dict, Optional
 
 from .core import log
+from .glossary_v2 import ConvertArgs
 from .glossary_v2 import Glossary as GlossaryV2
 from .sort_keys import lookupSortKey
 
@@ -115,3 +116,35 @@ class Glossary(GlossaryV2):
 
 		self._sort = True
 		self._iter = self._loadedEntryGen()
+
+	def convert(
+		self,
+		inputFilename: str,
+		inputFormat: str = "",
+		direct: "Optional[bool]" = None,
+		progressbar: bool = True,
+		outputFilename: str = "",
+		outputFormat: str = "",
+		sort: "Optional[bool]" = None,
+		sortKeyName: "Optional[str]" = None,
+		sortEncoding: "Optional[str]" = None,
+		readOptions: "Optional[Dict[str, Any]]" = None,
+		writeOptions: "Optional[Dict[str, Any]]" = None,
+		sqlite: "Optional[bool]" = None,
+		infoOverride: "Optional[Dict[str, str]]" = None,
+	) -> "Optional[str]":
+		self.progressbar = progressbar
+		return GlossaryV2.convert(self, ConvertArgs(
+			inputFilename=inputFilename,
+			inputFormat=inputFormat,
+			direct=direct,
+			outputFilename=outputFilename,
+			outputFormat=outputFormat,
+			sort=sort,
+			sortKeyName=sortKeyName,
+			sortEncoding=sortEncoding,
+			readOptions=readOptions,
+			writeOptions=writeOptions,
+			sqlite=sqlite,
+			infoOverride=infoOverride,
+		))
