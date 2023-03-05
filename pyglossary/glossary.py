@@ -70,7 +70,6 @@ class Glossary(GlossaryV2):
 		if not ok:
 			return False
 
-		self.detectLangsFromName()
 		return True
 
 	def updateIter(self) -> None:
