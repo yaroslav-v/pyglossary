@@ -308,15 +308,15 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 				yield entry
 
 	def __iter__(self) -> "Iterator[EntryType]":
+		if self._iter is not None:
+			return self._iter
+
 		if not self._readers:
 			return self._loadedEntryGen()
-		if self._iter is None:
-			log.error(
-				"Trying to iterate over a blank Glossary"
-				", must call `glos.read` first",
-			)
-			return iter([])
-		return self._iter
+
+		log.error("Glossary: iterator is not set in direct mode")
+		return iter([])
+
 
 	# TODO: switch to @property defaultDefiFormat
 	def setDefaultDefiFormat(self, defiFormat: str) -> None:
