@@ -92,7 +92,7 @@ sortKeyType = Callable[
 EntryFilterType = TypeVar("EntryFilter", bound=EntryFilter)
 
 
-@dataclass
+@dataclass(frozen=True)
 class ConvertArgs:
 	inputFilename: str
 	inputFormat: str = ""
@@ -1012,17 +1012,9 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 
 	def _convertPrepare(
 		self,
-		inputFilename: str,
-		inputFormat: str = "",
-		direct: "Optional[bool]" = None,
+		args: ConvertArgs,
 		outputFilename: str = "",
 		outputFormat: str = "",
-		sort: "Optional[bool]" = None,
-		sortKeyName: "Optional[str]" = None,
-		sortEncoding: "Optional[str]" = None,
-		readOptions: "Dict[str, Any]" = None,
-		writeOptions: "Dict[str, Any]" = None,
-		sqlite: "Optional[bool]" = None,
 	) -> "Optional[bool]":
 		if isdir(outputFilename) and os.listdir(outputFilename):
 			log.critical(
@@ -1031,37 +1023,37 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 			return None
 
 		sortParams = self._resolveSortParams(
-			sort=sort,
-			sortKeyName=sortKeyName,
-			sortEncoding=sortEncoding,
-			direct=direct,
-			sqlite=sqlite,
-			inputFilename=inputFilename,
+			sort=args.sort,
+			sortKeyName=args.sortKeyName,
+			sortEncoding=args.sortEncoding,
+			direct=args.direct,
+			sqlite=args.sqlite,
+			inputFilename=args.inputFilename,
 			outputFormat=outputFormat,
-			writeOptions=writeOptions,
+			writeOptions=args.writeOptions,
 		)
 		if sortParams is None:
 			return None
 		direct, sort = sortParams
 
-		del sqlite
 		showMemoryUsage()
 
-		self._setTmpDataDir(inputFilename)
+		self._setTmpDataDir(args.inputFilename)
+
+		readOptions = args.readOptions or {}
 
 		if not self._read(
-			inputFilename,
-			format=inputFormat,
+			args.inputFilename,
+			format=args.inputFormat,
 			direct=direct,
 			**readOptions,
 		):
-			log.critical(f"Reading file {relpath(inputFilename)!r} failed.")
+			log.critical(f"Reading file {relpath(args.inputFilename)!r} failed.")
 			self.cleanup()
 			return None
 
 		self.detectLangsFromName()
 
-		# del inputFilename, inputFormat, direct, readOptions
 		return sort
 
 	def convert(self, args: ConvertArgs) -> "Optional[str]":
@@ -1085,11 +1077,6 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 			log.critical("Input and output files are the same")
 			return None
 
-		if not args.readOptions:
-			args.readOptions = {}
-		if not args.writeOptions:
-			args.writeOptions = {}
-
 		tm0 = now()
 
 		outputArgs = self.detectOutputFormat(
@@ -1103,17 +1090,9 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 		outputFilename, outputFormat, compression = outputArgs
 
 		sort = self._convertPrepare(
-			inputFilename=args.inputFilename,
-			inputFormat=args.inputFormat,
-			direct=args.direct,
+			args=args,
 			outputFilename=outputFilename,
 			outputFormat=outputFormat,
-			sort=args.sort,
-			sortKeyName=args.sortKeyName,
-			sortEncoding=args.sortEncoding,
-			readOptions=args.readOptions,
-			writeOptions=args.writeOptions,
-			sqlite=args.sqlite,
 		)
 		if sort is None:
 			return None
@@ -1125,11 +1104,13 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 		if compression and not self.plugins[outputFormat].singleFile:
 			os.makedirs(outputFilename, mode=0o700, exist_ok=True)
 
+		writeOptions = args.writeOptions or {}
+
 		finalOutputFile = self._write(
 			outputFilename,
 			outputFormat,
 			sort=sort,
-			**args.writeOptions,
+			**writeOptions,
 		)
 		if not finalOutputFile:
 			log.critical(f"Writing file {relpath(outputFilename)!r} failed.")
