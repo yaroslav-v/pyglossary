@@ -112,4 +112,4 @@ class Glossary(GlossaryV2):
 		log.info(f"Sorting took {now() - t0:.1f} seconds")
 
 		self._sort = True
-		self._updateIter()
+		self._iter = self._loadedEntryGen()

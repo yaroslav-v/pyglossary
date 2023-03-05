@@ -376,7 +376,7 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 		# 	self._reopenReader(reader)
 		# self._readers = readers
 
-		self._updateIter()
+		self._iter = self._loadedEntryGen()
 
 		return result
 
@@ -605,11 +605,13 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 		self._readersOpenArgs[reader] = (filename, options)
 		self.prepareEntryFilters()
 
-		self._readers.append(reader)
 		if not direct:
-			self._inactivateDirectMode()
+			self.loadReader(reader)
+			self._iter = self._loadedEntryGen()
+			return True
 
-		self._updateIter()
+		self._readers.append(reader)
+		self._iter = self._readersEntryGen()
 
 		return True
 
@@ -631,30 +633,6 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 
 		log.trace(f"Loaded {len(self._data)} entries")
 		showMemoryUsage()
-
-	def _inactivateDirectMode(self) -> None:
-		"""
-		loads all of `self._readers` into `self._data`
-		closes readers
-		and sets self._readers to []
-		"""
-		for reader in self._readers:
-			self.loadReader(reader)
-		self._readers = []
-
-	def _updateIter(self) -> None:
-		"""
-		updates self._iter
-		depending on:
-			1- Whether or not direct mode is On (self._readers not empty)
-				or Off (self._readers empty)
-		"""
-		if not self._readers:  # indirect mode
-			self._iter = self._loadedEntryGen()
-			return
-
-		# direct mode
-		self._iter = self._readersEntryGen()
 
 	def _createWriter(
 		self,
@@ -780,7 +758,9 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 			log.warning(
 				"Full sort enabled, falling back to indirect mode",
 			)
-			self._inactivateDirectMode()
+			for reader in self._readers:
+				self.loadReader(reader)
+			self._readers = []
 
 		log.info(f"Writing to {format} file {filename!r}")
 
@@ -793,7 +773,10 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 			self._data.sort()
 			log.info(f"Sorting took {now() - t0:.1f} seconds")
 
-		self._updateIter()
+		if self._readers:
+			self._iter = self._readersEntryGen()
+		else:
+			self._iter = self._loadedEntryGen()
 		if not self._openWriter(writer, filename):
 			return None
 
