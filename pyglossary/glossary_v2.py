@@ -880,34 +880,31 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 
 	def _resolveSortParams(
 		self,
-		sort: "Optional[bool]",
-		sortKeyName: "Optional[str]",
-		sortEncoding: "Optional[str]",
-		direct: "Optional[bool]",
-		sqlite: "Optional[bool]",
-		inputFilename: str,
+		args: ConvertArgs,
 		outputFormat: str,
-		writeOptions: "Dict[str, Any]",
 	) -> "Optional[Tuple[bool, bool]]":
 		"""
 			sortKeyName: see doc/sort-key.md
 
 			returns (sort, direct) or None if fails
 		"""
-		if direct and sqlite:
-			raise ValueError(f"Conflictng arguments: {direct=}, {sqlite=}")
+		if args.direct and args.sqlite:
+			raise ValueError(
+				f"Conflictng arguments: direct={args.direct}, "
+				f"sqlite={args.sqlite}",
+			)
 
 		plugin = self.plugins[outputFormat]
-		sort = self._checkSortFlag(plugin, sort)
+		sort = self._checkSortFlag(plugin, args.sort)
 
 		if not sort:
-			if direct is None:
-				direct = True
-			return direct, False
+			if args.direct is None:
+				return True, False
+			return args.direct, False
 
-		del sort, direct
 		# from this point we can assume sort == True and direct == False
 
+		sqlite = args.sqlite
 		if sqlite is None:
 			sqlite = self._config.get("auto_sqlite", True)
 			if sqlite:
@@ -918,11 +915,11 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 
 		return self._processSortParams(
 			plugin=plugin,
-			sortKeyName=sortKeyName,
-			sortEncoding=sortEncoding,
+			sortKeyName=args.sortKeyName,
+			sortEncoding=args.sortEncoding,
 			sqlite=sqlite,
-			inputFilename=inputFilename,
-			writeOptions=writeOptions,
+			inputFilename=args.inputFilename,
+			writeOptions=args.writeOptions,
 		)
 
 	def _checkSortKey(
@@ -1023,14 +1020,8 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 			return None
 
 		sortParams = self._resolveSortParams(
-			sort=args.sort,
-			sortKeyName=args.sortKeyName,
-			sortEncoding=args.sortEncoding,
-			direct=args.direct,
-			sqlite=args.sqlite,
-			inputFilename=args.inputFilename,
+			args,
 			outputFormat=outputFormat,
-			writeOptions=args.writeOptions,
 		)
 		if sortParams is None:
 			return None
