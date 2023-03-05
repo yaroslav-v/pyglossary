@@ -265,9 +265,6 @@ class TestGlossaryErrors(TestGlossaryErrorsBase):
 	def test_iter_empty(self):
 		glos = Glossary()
 		self.assertEqual(list(glos), [])
-		self.assertLogError(
-			"Trying to iterate over a blank Glossary, must call `glos.read` first",
-		)
 
 	def test_convert_typeErr_1(self):
 		glos = Glossary()

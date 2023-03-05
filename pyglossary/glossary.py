@@ -70,6 +70,9 @@ class Glossary(GlossaryV2):
 		self.detectLangsFromName()
 		return True
 
+	def updateIter(self) -> None:
+		log.warning("calling glos.updateIter() is no longer needed.")
+
 	def sortWords(
 		self,
 		sortKeyName: "str" = "headword_lower",

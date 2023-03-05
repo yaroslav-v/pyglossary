@@ -856,7 +856,6 @@ class TestGlossary(TestGlossaryBase):
 				defiFormat=defiFormat,
 			))
 
-		glos.updateIter()
 		return wordsList
 
 	def addWords(self, glos, wordsStr, **kwargs):
@@ -906,7 +905,6 @@ Japonica"""
 		glos.addEntryObj(glos.newEntry(["b"], "test 3"))
 		glos.addEntryObj(glos.newEntry([], "test 4"))
 		glos.updateEntryFilters()
-		glos.updateIter()
 		self.assertEqual(
 			[['a'], [''], ['b'], []],
 			[entry.l_word for entry in glos],
@@ -921,7 +919,6 @@ Japonica"""
 			b"hello\x00world",
 		))
 		glos.updateEntryFilters()
-		glos.updateIter()
 		wordListList = []
 		dataEntries = []
 		for entry in glos:

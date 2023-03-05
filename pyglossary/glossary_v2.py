@@ -308,6 +308,8 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 				yield entry
 
 	def __iter__(self) -> "Iterator[EntryType]":
+		if not self._readers:
+			return self._loadedEntryGen()
 		if self._iter is None:
 			log.error(
 				"Trying to iterate over a blank Glossary"
@@ -653,11 +655,6 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 
 		# direct mode
 		self._iter = self._readersEntryGen()
-
-	def updateIter(self) -> None:
-		if self._readers:
-			raise RuntimeError("can not call this while having a reader")
-		self._updateIter()
 
 	def _createWriter(
 		self,
