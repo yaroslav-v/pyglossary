@@ -56,12 +56,19 @@ class Glossary(GlossaryV2):
 				f", you can not read with direct=False mode",
 			)
 
-		return self._read(
+		self._setTmpDataDir(filename)
+
+		ok = self._read(
 			filename=filename,
 			format=format,
 			direct=direct,
 			**kwargs,
 		)
+		if not ok:
+			return False
+
+		self.detectLangsFromName()
+		return True
 
 	def sortWords(
 		self,

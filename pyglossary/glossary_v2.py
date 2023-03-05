@@ -572,9 +572,6 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 		**options,  # noqa: ANN
 	) -> bool:
 		filename = os.path.abspath(filename)
-
-		self._setTmpDataDir(filename)
-
 		###
 		inputArgs = self.detectInputFormat(filename, format=format)
 		if inputArgs is None:
@@ -611,7 +608,6 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 			self._inactivateDirectMode()
 
 		self._updateIter()
-		self.detectLangsFromName()
 
 		return True
 
@@ -1063,6 +1059,8 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 		del sqlite
 		showMemoryUsage()
 
+		self._setTmpDataDir(inputFilename)
+
 		if not self._read(
 			inputFilename,
 			format=inputFormat,
@@ -1073,6 +1071,8 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 			log.critical(f"Reading file {relpath(inputFilename)!r} failed.")
 			self.cleanup()
 			return None
+
+		self.detectLangsFromName()
 
 		# del inputFilename, inputFormat, direct, readOptions
 		return sort
