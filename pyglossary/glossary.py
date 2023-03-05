@@ -32,6 +32,7 @@ class Glossary(GlossaryV2):
 		filename: str,
 		format: str = "",
 		direct: bool = False,
+		progressbar: bool = True,
 		**kwargs,  # noqa: ANN
 	) -> bool:
 		"""
@@ -57,6 +58,8 @@ class Glossary(GlossaryV2):
 			)
 
 		self._setTmpDataDir(filename)
+
+		self._progressbar = progressbar
 
 		ok = self._read(
 			filename=filename,

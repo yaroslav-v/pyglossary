@@ -570,7 +570,6 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 		filename: str,
 		format: str = "",
 		direct: bool = False,
-		progressbar: bool = True,
 		**options,  # noqa: ANN
 	) -> bool:
 		filename = os.path.abspath(filename)
@@ -594,7 +593,6 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 		self._filename = filenameNoExt
 		if not self._info.get(c_name):
 			self._info[c_name] = os.path.split(filename)[1]
-		self._progressbar = progressbar
 
 		self.updateEntryFilters()
 
@@ -1006,7 +1004,6 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 		inputFilename: str,
 		inputFormat: str = "",
 		direct: "Optional[bool]" = None,
-		progressbar: bool = True,
 		outputFilename: str = "",
 		outputFormat: str = "",
 		sort: "Optional[bool]" = None,
@@ -1045,7 +1042,6 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 			inputFilename,
 			format=inputFormat,
 			direct=direct,
-			progressbar=progressbar,
 			**readOptions,
 		):
 			log.critical(f"Reading file {relpath(inputFilename)!r} failed.")
@@ -1115,11 +1111,12 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 			return None
 		outputFilename, outputFormat, compression = outputArgs
 
+		self._progressbar = progressbar
+
 		sort = self._convertPrepare(
 			inputFilename=inputFilename,
 			inputFormat=inputFormat,
 			direct=direct,
-			progressbar=progressbar,
 			outputFilename=outputFilename,
 			outputFormat=outputFormat,
 			sort=sort,
