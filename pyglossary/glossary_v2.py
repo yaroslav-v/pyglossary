@@ -123,7 +123,6 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 			except Exception:
 				log.exception("")
 		self._readers = []
-		self._readersOpenArgs = {}
 		self._defiHasWordTitle = False
 
 		self._iter = None
@@ -331,13 +330,6 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 	def getDefaultDefiFormat(self) -> str:
 		return self._defaultDefiFormat
 
-	# TODO
-	# def _reopenReader(self, reader):
-	# 	log.info(f"re-opening {reader.__class__}")
-	# 	filename, options = self._readersOpenArgs[reader]
-	# 	reader.close()
-	# 	reader.open(filename, **options)
-
 	def collectDefiFormat(
 		self,
 		maxCount: int,
@@ -370,11 +362,6 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 		for defiFormat in ("h", "m", "x"):
 			if defiFormat not in result:
 				result[defiFormat] = 0
-
-		# TODO
-		# for reader in readers:
-		# 	self._reopenReader(reader)
-		# self._readers = readers
 
 		self._iter = self._loadedEntryGen()
 
@@ -600,7 +587,6 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 		if not self._openReader(reader, filename):
 			return False
 
-		self._readersOpenArgs[reader] = (filename, options)
 		self.prepareEntryFilters()
 
 		if not direct:
