@@ -915,11 +915,8 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 
 		return self._processSortParams(
 			plugin=plugin,
-			sortKeyName=args.sortKeyName,
-			sortEncoding=args.sortEncoding,
+			args=args,
 			sqlite=sqlite,
-			inputFilename=args.inputFilename,
-			writeOptions=args.writeOptions,
 		)
 
 	def _checkSortKey(
@@ -969,29 +966,28 @@ class Glossary(GlossaryInfo, GlossaryProgress, PluginManager, GlossaryType):
 	def _processSortParams(
 		self,
 		plugin: "PluginProp",
-		sortKeyName: "Optional[str]",
-		sortEncoding: "Optional[str]",
+		args: ConvertArgs,
 		sqlite: "Optional[bool]",
-		inputFilename: str,
-		writeOptions: "Dict[str, Any]",
 	) -> "Optional[Tuple[bool, bool]]":
-		sortKeyTuple = self._checkSortKey(plugin, sortKeyName, sortEncoding)
+		sortKeyTuple = self._checkSortKey(
+			plugin,
+			args.sortKeyName,
+			args.sortEncoding,
+		)
 		if sortKeyTuple is None:
 			return None
 		namedSortKey, sortEncoding = sortKeyTuple
 
 		if sqlite:
 			self._switchToSQLite(
-				inputFilename=inputFilename,
+				inputFilename=args.inputFilename,
 				outputFormat=plugin.name,
 			)
 
-		if writeOptions is None:
-			writeOptions = {}
 		self._data.setSortKey(
 			namedSortKey=namedSortKey,
 			sortEncoding=sortEncoding,
-			writeOptions=writeOptions,
+			writeOptions=args.writeOptions or {},
 		)
 
 		return False, True
