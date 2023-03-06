@@ -13,7 +13,7 @@ from pyglossary.core_test import getMockLogger
 from pyglossary.glossary import Glossary as GlossaryLegacy
 from pyglossary.glossary_v2 import ConvertArgs, Glossary
 from pyglossary.os_utils import rmtree
-from tests.glossary_test import TestGlossaryBase, appTmpDir
+from tests.glossary_v2_test import TestGlossaryBase, appTmpDir
 
 Glossary.init()
 

@@ -17,7 +17,7 @@ rootDir = dirname(dirname(abspath(__file__)))
 sys.path.insert(0, rootDir)
 
 from pyglossary.core import cacheDir, log
-from pyglossary.glossary import Glossary
+from pyglossary.glossary_v2 import ConvertArgs, Glossary
 from pyglossary.os_utils import rmtree
 from pyglossary.text_utils import crc32hex
 
@@ -233,18 +233,18 @@ class TestGlossaryBase(unittest.TestCase):
 		md5sum=None,
 		config=None,
 		showDiff=False,
-		**convertArgs,
+		**convertKWArgs,
 	):
 		inputFilename = self.downloadFile(fname)
 		outputFilename = self.newTempFilePath(fname2)
 		glos = self.glos = Glossary()
 		if config is not None:
 			glos.config = config
-		res = glos.convert(
+		res = glos.convert(ConvertArgs(
 			inputFilename=inputFilename,
 			outputFilename=outputFilename,
-			**convertArgs,
-		)
+			**convertKWArgs,
+		))
 		self.assertEqual(outputFilename, res)
 
 		if compareText:
@@ -424,25 +424,17 @@ class TestGlossary(TestGlossaryBase):
 		glos.config = {"lower": True}
 		self.assertEqual(glos.getConfig("lower", False), True)
 
-	def test_read_txt_1(self):
+	def test_directRead_txt_1(self):
 		inputFilename = self.downloadFile("100-en-fa.txt")
 		glos = self.glos = Glossary()
-		res = glos.read(filename=inputFilename)
+		res = glos.directRead(filename=inputFilename)
 		self.assertTrue(res)
 		self.assertEqual(glos.sourceLangName, "English")
 		self.assertEqual(glos.targetLangName, "Persian")
 		self.assertIn("Sample: ", glos.getInfo("name"))
-		self.assertEqual(len(glos), 100)
 
-	def test_read_txt_direct_1(self):
-		inputFilename = self.downloadFile("100-en-fa.txt")
-		glos = self.glos = Glossary()
-		res = glos.read(filename=inputFilename, direct=True)
-		self.assertTrue(res)
-		self.assertEqual(glos.sourceLangName, "English")
-		self.assertEqual(glos.targetLangName, "Persian")
-		self.assertIn("Sample: ", glos.getInfo("name"))
-		self.assertEqual(len(glos), 0)
+		entryCount = sum(1 for _ in glos)
+		self.assertEqual(entryCount, 100)
 
 	def test_init_infoDict(self):
 		glos = self.glos = Glossary(info={"a": "b"})
@@ -574,7 +566,7 @@ class TestGlossary(TestGlossaryBase):
 		fname2,  # expected output file without extensions
 		testId="tmp",
 		config=None,
-		**convertArgs,
+		**convertKWArgs,
 	):
 		inputFilename = self.downloadFile(fname)
 		outputTxtName = f"{fname2}-{testId}.txt"
@@ -583,11 +575,11 @@ class TestGlossary(TestGlossaryBase):
 		glos = self.glos = Glossary()
 		if config is not None:
 			glos.config = config
-		res = glos.convert(
+		res = glos.convert(ConvertArgs(
 			inputFilename=inputFilename,
 			outputFilename=outputFilename,
-			**convertArgs,
-		)
+			**convertKWArgs,
+		))
 		self.assertEqual(outputFilename, res)
 		zf = zipfile.ZipFile(outputFilename)
 		self.assertTrue(
@@ -732,12 +724,12 @@ class TestGlossary(TestGlossaryBase):
 	def test_convert_sqlite_direct_error(self):
 		glos = self.glos = Glossary()
 		try:
-			glos.convert(
+			glos.convert(ConvertArgs(
 				inputFilename="foo.txt",
 				outputFilename="bar.txt",
 				direct=True,
 				sqlite=True,
-			)
+			))
 		except ValueError as e:
 			self.assertEqual(str(e), "Conflictng arguments: direct=True, sqlite=True")
 		else:
@@ -855,7 +847,6 @@ class TestGlossary(TestGlossaryBase):
 				defiFormat=defiFormat,
 			))
 
-		glos.updateIter()
 		return wordsList
 
 	def addWords(self, glos, wordsStr, **kwargs):
@@ -905,7 +896,6 @@ Japonica"""
 		glos.addEntryObj(glos.newEntry(["b"], "test 3"))
 		glos.addEntryObj(glos.newEntry([], "test 4"))
 		glos.updateEntryFilters()
-		glos.updateIter()
 		self.assertEqual(
 			[['a'], [''], ['b'], []],
 			[entry.l_word for entry in glos],
@@ -920,7 +910,6 @@ Japonica"""
 			b"hello\x00world",
 		))
 		glos.updateEntryFilters()
-		glos.updateIter()
 		wordListList = []
 		dataEntries = []
 		for entry in glos:
@@ -935,110 +924,9 @@ Japonica"""
 		self.assertEqual(dataEntries[0].getFileName(), "file.bin")
 		self.assertEqual(dataEntries[0].data, b"hello\x00world")
 
-	def test_sortWords_1(self):
-		glos = self.glos = Glossary()
-		wordsList = self.addWords(
-			glos,
-			self.tenWordsStr,
-			newDefiFunc=lambda i: str(random.randint(0, 10000)),
-		)
-		self.assertEqual(wordsList, [entry.l_word for entry in glos])
-		glos.sortWords()
-		self.assertEqual(sorted(wordsList), [entry.l_word for entry in glos])
-
-	def test_sortWords_2(self):
-		glos = self.glos = Glossary()
-		wordsList = self.addWords(
-			glos,
-			self.tenWordsStr2,
-			newDefiFunc=lambda i: str(random.randint(0, 10000)),
-		)
-		self.assertEqual(wordsList, [entry.l_word for entry in glos])
-		glos.sortWords(sortKeyName="headword")
-		self.assertEqual(
-			[entry.l_word for entry in glos],
-			[
-				['Adipocere'],
-				['Caca', 'ca-ca'],
-				['Japonica'],
-				['Next friend'],
-				['Tubenose'],
-				['bitter apple'],
-				['comedic'],
-				['darkling beetle'],
-				['gid'],
-				['organosol'],
-			],
-		)
-
-	def test_sortWords_3(self):
-		glos = self.glos = Glossary()
-		wordsList = self.addWords(
-			glos,
-			self.tenWordsStrFa,
-			newDefiFunc=lambda i: str(random.randint(0, 10000)),
-		)
-		self.assertEqual(wordsList, [entry.l_word for entry in glos])
-		glos.sortWords(sortKeyName="headword")
-		ls1 = ['آماسش', 'انگیزنده', 'بیمارانه', 'رشکمندی', 'شگفتآفرینی']
-		ls2 = ['نامبارکی', 'ناکاستنی', 'نقاهت', 'چندپاری', 'گالوانومتر']
-		self.assertEqual(
-			[entry.s_word for entry in glos],
-			ls1 + ls2,
-		)
-
-	def test_sortWords_4(self):
-		glos = self.glos = Glossary()
-		wordsList = self.addWords(
-			glos,
-			self.tenWordsStrFa,
-			newDefiFunc=lambda i: str(random.randint(0, 10000)),
-		)
-		self.assertEqual(wordsList, [entry.l_word for entry in glos])
-		glos.sortWords(
-			sortKeyName="headword",
-			sortEncoding="windows-1256",
-		)
-		ls1 = ['چندپاری', 'گالوانومتر', 'آماسش', 'انگیزنده', 'بیمارانه']
-		ls2 = ['رشکمندی', 'شگفتآفرینی', 'ناکاستنی', 'نامبارکی', 'نقاهت']
-		self.assertEqual(
-			[entry.s_word for entry in glos],
-			ls1 + ls2,
-		)
-
-	def test_sortWords_5(self):
-		glos = self.glos = Glossary()
-		alphabetW1256 = "ءآأئابتثجحخدذرزسشصضطظعغـفقكلمنهوىي"
-		alphabetW1256_shuf = "مفزنصـذرخوآظسقلدغطيعحءأتىئاجهضثشكب"
-		wordsList = self.addWordsList(
-			glos,
-			list(alphabetW1256_shuf),
-			newDefiFunc=lambda i: str(random.randint(0, 10000)),
-		)
-		self.assertEqual(wordsList, [entry.l_word for entry in glos])
-		glos.sortWords(
-			sortKeyName="headword",
-			sortEncoding="windows-1256",
-		)
-		self.assertEqual(
-			[entry.s_word for entry in glos],
-			list(alphabetW1256),
-		)
-
-	def test_sortWords_exc_1(self):
-		fname = "100-en-fa.txt"
-		glos = self.glos = Glossary()
-		glos.read(self.downloadFile(fname), direct=True)
-		try:
-			glos.sortWords()
-		except NotImplementedError as e:
-			self.assertEqual(str(e), "can not use sortWords in direct mode")
-		else:
-			self.fail("must raise NotImplementedError")
-
 	def test_read_filename(self):
 		glos = self.glos = Glossary()
-		glos.read(self.downloadFile("004-bar.txt"))
+		glos.directRead(self.downloadFile("004-bar.txt"))
 		self.assertEqual(glos.filename, join(dataDir, "004-bar"))
 
 	def test_wordTitleStr_em1(self):
