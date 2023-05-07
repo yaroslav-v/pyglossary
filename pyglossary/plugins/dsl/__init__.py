@@ -114,7 +114,8 @@ def unescape(text: str) -> str:
 
 
 def make_a_href(s: str) -> str:
-	return f"<a href={quoteattr(s)}>{escape(s)}</a>"
+#	return f"<a href={quoteattr(s)}>{escape(s)}</a>"
+	return f"<kref>{escape(s)}</kref>"
 
 
 def ref_sub(x: "re.Match") -> str:
@@ -220,18 +221,18 @@ def _clean_tags(line: str, audio: bool) -> str:
 	line = line.replace("[com]", "").replace("[/com]", "")
 
 	# escape html special characters like '<' and '>'
-	line = html.escape(html.unescape(line))
+	line = html.escape(html.unescape(line)) # FIXME: ???, NB! might break <<links>>
 
 	# remove t tags
 	line = line.replace(
 		"[t]",
-		"<font face=\"Helvetica\" class=\"dsl_t\">",
+		"<c face=\"Helvetica\" class=\"dsl_t\">", # FIXME: OK, NB! xdxf might not support custom fonts
 	)
-	line = line.replace("[/t]", "</font>")
+	line = line.replace("[/t]", "</c>") # FIXME: OK
 
 	line = _parse(line)
 
-	line = re_end.sub("<br/>", line)
+	line = re_end.sub("<br/>", line) # FIXME: OK, ???
 
 	# paragraph, part one: before shortcuts.
 	line = line.replace("[m]", "[m1]")
@@ -241,62 +242,60 @@ def _clean_tags(line: str, audio: bool) -> str:
 	if not re_m_open.search(line):
 		line = f"[m1]{line}[/m]"
 
-	line = apply_shortcuts(line)
+	line = apply_shortcuts(line) # FIXME: ???
 
 	# paragraph, part two: if any not shourcuted [m] left?
-	line = re_m.sub(r'<div style="margin-left:\g<1>em">\g<2></div>', line)
+# 	line = re_m.sub(r'<div style="margin-left:\g<1>em">\g<2></div>', line)
+	line = re_m.sub(r'<blockquote><blockquote>\g<2></blockquote></blockquote>', line) # FIXME: OK, NB! fix number of <blockquotes> according to [m] factor
 
 	# text formats
 
-	line = line.replace("[']", "<u>").replace("[/']", "</u>")
-	line = line.replace("[b]", "<b>").replace("[/b]", "</b>")
-	line = line.replace("[i]", "<i>").replace("[/i]", "</i>")
-	line = line.replace("[u]", "<u>").replace("[/u]", "</u>")
-	line = line.replace("[sup]", "<sup>").replace("[/sup]", "</sup>")
-	line = line.replace("[sub]", "<sub>").replace("[/sub]", "</sub>")
+	line = line.replace("[']", "<u>").replace("[/']", "</u>") # FIXME: OK
+	line = line.replace("[b]", "<b>").replace("[/b]", "</b>") # FIXME: OK
+	line = line.replace("[i]", "<i>").replace("[/i]", "</i>") # FIXME: OK
+	line = line.replace("[u]", "<u>").replace("[/u]", "</u>") # FIXME: OK
+	line = line.replace("[sup]", "<sup>").replace("[/sup]", "</sup>") # FIXME: OK
+	line = line.replace("[sub]", "<sub>").replace("[/sub]", "</sub>") # FIXME: OK
 
 	# color
-	line = line.replace("[c]", "<font color=\"green\">")
-	line = re_c_open_color.sub("<font color=\"\\g<1>\">", line)
-	line = line.replace("[/c]", "</font>")
+	line = line.replace("[c]", "<c c=\"green\">") # FIXME: OK
+	line = re_c_open_color.sub("<c c=\"\\g<1>\">", line) # FIXME: OK
+	line = line.replace("[/c]", "</c>") # FIXME: OK
 
 	# example zone
-	line = line.replace("[ex]", "<span class=\"ex\"><font color=\"steelblue\">")
-	line = line.replace("[/ex]", "</font></span>")
+	line = line.replace("[ex]", "<span class=\"ex\"><font color=\"steelblue\">") # FIXME: OK, ???
+	line = line.replace("[/ex]", "</font></span>") # FIXME: OK, ???
 
 	# secondary zone
 	line = line.replace("[*]", "<span class=\"sec\">")\
-		.replace("[/*]", "</span>")
+		.replace("[/*]", "</span>") # FIXME: OK, ???
 
 	# abbrev. label
-	line = line.replace("[p]", "<i class=\"p\"><font color=\"green\">")
-	line = line.replace("[/p]", "</font></i>")
+	line = line.replace("[p]", "<abr>") # FIXME: OK
+	line = line.replace("[/p]", "</abr>") # FIXME: OK
 
 	# cross reference
-	line = line.replace("[ref]", "<<").replace("[/ref]", ">>")
-	line = line.replace("[url]", "<<").replace("[/url]", ">>")
-	line = re_ref.sub(ref_sub, line)
+	line = line.replace("[ref]", "<kref>").replace("[/ref]", "</kref>") # FIXME: OK
+	line = line.replace("[url]", "<kref>").replace("[/url]", "<kref>") # FIXME: OK
+	line = re_ref.sub(ref_sub, line) # FIXME: OK, NB! might be necessary to use <iref> for external links
 
 	# sound file
 	if audio:
 		sound_tag = (
-			r'<object type="audio/x-wav" data="\g<1>\g<2>" '
-			"width=\"40\" height=\"40\">"
-			"<param name=\"autoplay\" value=\"false\" />"
-			"</object>"
+			r'<rref lctn="\g<1>\g<2>" type="audio/x-wav">\g<1>\g<2></rref>'
 		)
 	else:
 		sound_tag = ""
-	line = re_sound.sub(sound_tag, line)
+	line = re_sound.sub(sound_tag, line) # FIXME: OK
 
 	# image file
 	line = re_img.sub(
-		r'<img align="top" src="\g<1>\g<2>" alt="\g<1>\g<2>" />',
+		r'<rref lctn="\g<1>\g<2>" type="image/jpeg" />',
 		line,
-	)
+	) # FIXME: OK, NB! mime type is set by default!
 
 	# \[...\]
-	return line.replace("\\[", "[").replace("\\]", "]")
+	return line.replace("\\[", "[").replace("\\]", "]") # FIXME: OK
 
 
 def unwrap_quotes(s: str) -> str:
