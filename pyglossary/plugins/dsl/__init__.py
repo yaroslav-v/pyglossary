@@ -128,10 +128,12 @@ shortcuts = [
 	(
 		"[m1](?:-{2,})[/m]",
 		"<hr/>",
+# 		"<blockquote>\\g<1></blockquote>"
 	),
 	(
 		"[m(\\d)](?:-{2,})[/m]",
 		"<hr style=\"margin-left:\\g<1>em\"/>",
+# 		"<blockquote>\\g<2></blockquote>"
 	),
 ]
 
@@ -220,15 +222,15 @@ def _clean_tags(line: str, audio: bool) -> str:
 	# remove com tags
 	line = line.replace("[com]", "").replace("[/com]", "")
 
+	# fixed escaping <<links>>
+	line = line.replace("<<", "[ref]").replace(">>", "[/ref]") # FIXME: ADDED
+	
 	# escape html special characters like '<' and '>'
-	line = html.escape(html.unescape(line)) # FIXME: ???, NB! might break <<links>>
+	line = html.escape(html.unescape(line)) # FIXME: OK
 
 	# remove t tags
-	line = line.replace(
-		"[t]",
-		"<c face=\"Helvetica\" class=\"dsl_t\">", # FIXME: OK, NB! xdxf might not support custom fonts
-	)
-	line = line.replace("[/t]", "</c>") # FIXME: OK
+	line = line.replace("[t]", "")\
+		.replace("[/t]", "") # FIXME: OK
 
 	line = _parse(line)
 
@@ -263,12 +265,12 @@ def _clean_tags(line: str, audio: bool) -> str:
 	line = line.replace("[/c]", "</c>") # FIXME: OK
 
 	# example zone
-	line = line.replace("[ex]", "<span class=\"ex\"><font color=\"steelblue\">") # FIXME: OK, ???
-	line = line.replace("[/ex]", "</font></span>") # FIXME: OK, ???
+	line = line.replace("[ex]", "<ex>") # FIXME: OK
+	line = line.replace("[/ex]", "</ex>") # FIXME: OK
 
 	# secondary zone
-	line = line.replace("[*]", "<span class=\"sec\">")\
-		.replace("[/*]", "</span>") # FIXME: OK, ???
+	line = line.replace("[*]", "")\
+		.replace("[/*]", "") # FIXME: OK
 
 	# abbrev. label
 	line = line.replace("[p]", "<abr>") # FIXME: OK
@@ -276,8 +278,8 @@ def _clean_tags(line: str, audio: bool) -> str:
 
 	# cross reference
 	line = line.replace("[ref]", "<kref>").replace("[/ref]", "</kref>") # FIXME: OK
-	line = line.replace("[url]", "<kref>").replace("[/url]", "<kref>") # FIXME: OK
-	line = re_ref.sub(ref_sub, line) # FIXME: OK, NB! might be necessary to use <iref> for external links
+	line = line.replace("[url]", "<iref>").replace("[/url]", "</iref>") # FIXME: OK, NB! might be necessary to use <iref href=""> attribute
+	line = re_ref.sub(ref_sub, line) # FIXME: OK
 
 	# sound file
 	if audio:
@@ -460,6 +462,7 @@ class Reader(object):
 				if unfinished_line:
 					# line may be skipped if ill formatted
 					current_text.append(self.clean_tags(unfinished_line, self._audio))
+# 				current_text.append("</ar>")
 				yield self._glos.newEntry(
 					[current_key] + current_key_alters,
 					"\n".join(current_text),
@@ -476,6 +479,11 @@ class Reader(object):
 			current_text = []
 			unfinished_line = ""
 			line_type = "title"
+			
+			# FIXME: it might be a good idea to place the whole text in <ar></arr>,
+			# in order to group together all the stuff related to one key-phrase
+			# NB! Doesn't work for ColorDict
+# 			current_text.append("<ar>")
 
 		# last entry
 		if line_type == "text":
