@@ -170,6 +170,10 @@ def apply_shortcuts(line: str) -> str:
 	return line
 
 
+# some details regarding formats:
+# http://lingvo.helpmax.net/en/troubleshooting/dsl-compiler/dsl-tags/
+# https://wiki.mobileread.com/wiki/XDXF
+# https://github.com/soshial/xdxf_makedict/tree/master/format_standard
 def _clean_tags(line: str, audio: bool) -> str:
 	r"""
 	[m{}] => <div style="margin-left:{}em">
@@ -235,7 +239,7 @@ def _clean_tags(line: str, audio: bool) -> str:
 
 	line = _parse(line)
 
-	line = re_end.sub("<br/>", line) # FIXME: ???
+# 	line = re_end.sub("<br/>", line) # FIXME: old versions don't support <br/> tag
 
 	# paragraph, part one: before shortcuts.
 	line = line.replace("[m]", "[m1]")
@@ -260,7 +264,8 @@ def _clean_tags(line: str, audio: bool) -> str:
 	line = line.replace("[u]", "<u>").replace("[/u]", "</u>") # FIXME: OK
 	line = line.replace("[sup]", "<sup>").replace("[/sup]", "</sup>") # FIXME: OK
 	line = line.replace("[sub]", "<sub>").replace("[/sub]", "</sub>") # FIXME: OK
-	line = line.replace("[br]", "<br/>") # FIXME: some malformed dsl dictionaries may have [br] tags
+# 	line = line.replace("[br]", "<br/>") # FIXME: some malformed dsl dictionaries may have [br] tags
+	line = line.replace("[br]", "\r\n") # FIXME: replace with CRLF to support ColorDict
 
 	# color
 	line = line.replace("[c]", "<c c=\"green\">") # FIXME: OK
@@ -276,8 +281,8 @@ def _clean_tags(line: str, audio: bool) -> str:
 		.replace("[/*]", "") # FIXME: OK
 
 	# abbrev. label
-	line = line.replace("[p]", "<abr>") # FIXME: OK
-	line = line.replace("[/p]", "</abr>") # FIXME: OK
+	line = line.replace("[p]", "<i><c c=\"green\"><abr>") # FIXME: OK
+	line = line.replace("[/p]", "</abr></c></i>") # FIXME: OK
 
 	# cross reference
 	line = line.replace("[ref]", "<kref>").replace("[/ref]", "</kref>") # FIXME: OK
