@@ -128,12 +128,10 @@ shortcuts = [
 	(
 		"[m1](?:-{2,})[/m]",
 		"<hr/>",
-# 		"<blockquote>\\g<1></blockquote>"
 	),
 	(
 		"[m(\\d)](?:-{2,})[/m]",
 		"<hr style=\"margin-left:\\g<1>em\"/>",
-# 		"<blockquote>\\g<2></blockquote>"
 	),
 ]
 
@@ -152,7 +150,10 @@ re_m_open = re.compile(r"(?<!\\)\[m\d\]")
 re_c_open_color = re.compile(r"\[c (\w+)\]")
 re_sound = re.compile(r"\[s\]([^\[]*?)(wav|mp3)\s*\[/s\]")
 re_img = re.compile(r"\[s\]([^\[]*?)(jpg|jpeg|gif|tif|tiff)\s*\[/s\]")
-re_m = re.compile(r"\[m(\d)\](.*?)\[/m\]")
+# re_m = re.compile(r"\[m(\d)\](.*?)\[/m\]")
+re_m1 = re.compile(r"\[m1\](.*?)\[/m\]")
+re_m2 = re.compile(r"\[m2\](.*?)\[/m\]")
+re_m3 = re.compile(r"\[m3\](.*?)\[/m\]")
 re_wrapped_in_quotes = re.compile("^(\\'|\")(.*)(\\1)$")
 re_end = re.compile(r"\\$")
 re_ref = re.compile("<<(.*?)>>")
@@ -234,7 +235,7 @@ def _clean_tags(line: str, audio: bool) -> str:
 
 	line = _parse(line)
 
-	line = re_end.sub("<br/>", line) # FIXME: OK, ???
+	line = re_end.sub("<br/>", line) # FIXME: ???
 
 	# paragraph, part one: before shortcuts.
 	line = line.replace("[m]", "[m1]")
@@ -244,20 +245,22 @@ def _clean_tags(line: str, audio: bool) -> str:
 	if not re_m_open.search(line):
 		line = f"[m1]{line}[/m]"
 
-	line = apply_shortcuts(line) # FIXME: ???
+# 	line = apply_shortcuts(line) # FIXME: OK, just commented out because xdxf doesn't support <hr> tags anyway
 
 	# paragraph, part two: if any not shourcuted [m] left?
 # 	line = re_m.sub(r'<div style="margin-left:\g<1>em">\g<2></div>', line)
-	line = re_m.sub(r'<blockquote><blockquote>\g<2></blockquote></blockquote>', line) # FIXME: OK, NB! fix number of <blockquotes> according to [m] factor
+	line = re_m1.sub(r'<blockquote>\g<1></blockquote>', line) # FIXME: support the number of <blockquotes> according to [m?] factor
+	line = re_m2.sub(r'<blockquote><blockquote>\g<1></blockquote></blockquote>', line)
+	line = re_m3.sub(r'<blockquote><blockquote><blockquote>\g<1></blockquote></blockquote></blockquote>', line)
 
 	# text formats
-
 	line = line.replace("[']", "<u>").replace("[/']", "</u>") # FIXME: OK
 	line = line.replace("[b]", "<b>").replace("[/b]", "</b>") # FIXME: OK
 	line = line.replace("[i]", "<i>").replace("[/i]", "</i>") # FIXME: OK
 	line = line.replace("[u]", "<u>").replace("[/u]", "</u>") # FIXME: OK
 	line = line.replace("[sup]", "<sup>").replace("[/sup]", "</sup>") # FIXME: OK
 	line = line.replace("[sub]", "<sub>").replace("[/sub]", "</sub>") # FIXME: OK
+	line = line.replace("[br]", "<br/>") # FIXME: some malformed dsl dictionaries may have [br] tags
 
 	# color
 	line = line.replace("[c]", "<c c=\"green\">") # FIXME: OK
